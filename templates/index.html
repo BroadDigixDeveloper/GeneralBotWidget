@@ -31,7 +31,7 @@
       }
 
       .chat-toggle {
-        width: 60px;
+        width: 73px;
         height: 60px;
         border-radius: 50%;
         display: flex;
@@ -46,8 +46,8 @@
         position: fixed;
         bottom: 90px;
         right: 20px;
-        width: 380px;
-        min-height: 500px;
+        width: 350px;
+        min-height: 480px;
         max-height: calc(100vh - 120px); /* 90px bottom + 30px top padding */
         height: auto;
         background-color: #fff;
@@ -74,6 +74,7 @@
         display: flex;
         transform: translateY(0);
         opacity: 1;
+        margin-bottom: 10px;
       }
 
       .chat-header {
@@ -143,6 +144,7 @@
 .chat-toggle .message-bubble {
   opacity: 1;
   transform: translateY(0);
+  margin-bottom: 13px;
 }
       .bot-avatar1 {
         width: 40px;
@@ -410,7 +412,7 @@
       @media (max-width: 480px) {
         .chat-box {
           width: calc(100% - 32px);
-          max-width: 420px;
+          max-width: 400px;
           height: calc(100vh - 120px);
           margin: 0 16px;
         }
@@ -469,14 +471,104 @@
           width: 0 !important;
         }
       }
+
+
+      /* Mobile-specific adjustments */
+      @media screen and (max-width: 480px) {
+        .chat-box {
+          width: 94vw;
+          right: 0vw;
+          bottom: 90px;
+          height: calc(100vh - 100px);
+        }
+        
+        .chat-messages {
+          height: calc(100vh - 220px);
+        }
+        
+        .options {
+          flex-direction: column;
+        }
+        
+        .option-button {
+          width: 100%;
+          max-width: none;
+        }
+        
+        .message-bubble {
+          display: none;
+        }
+      }
+      
+      /* Tablet adjustments */
+      @media screen and (min-width: 481px) and (max-width: 768px) {
+        .chat-box {
+          width: 85vw;
+          right: 7.5vw;
+        }
+        
+        .options {
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+      }
+      
+      /* Small laptop/desktop adjustments */
+      @media screen and (min-width: 769px) and (max-width: 1024px) {
+        .chat-box {
+          width: 70vw;
+          max-width: 380px;
+        }
+      }
+      
+      /* Touch device optimizations */
+      @media (hover: none) {
+        .chat-toggle:active {
+          transform: scale(0.95);
+        }
+        
+        .option-button:active {
+          transform: translateY(-1px);
+        }
+      }
+      
+      /* Ensure smooth scrolling */
+      .chat-messages {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+      }
+      
+      /* High contrast and accessibility */
+      @media (prefers-contrast: high) {
+        .chat-input input {
+          border: 2px solid #000;
+        }
+        
+        .bot-message, .user-message {
+          border: 1px solid #000;
+        }
+      }
+
+
+      @media screen and (min-width: 1400px) {
+
+
+        .chat-box {
+         
+          max-height: calc(100vh - 300px);
+
+      }
     </style>
   </head>
   <body>
+
+   
+
+
     <div class="chat-widget">
       <div class="chat-toggle">
         <div class="message-bubble">How can I help you today?</div>
         <img
-          src="static/images/ferni_icons3.png"
+          src="static/images/icons2.jpg"
           alt="FernWood Fitness"
           class="bot-avatar_toggle"
         />
@@ -488,13 +580,13 @@
           </div>
           <div class="bot-info">
             <img
-              src="static/images/ferni_icons3.png"
+              src="static/images/icons2.jpg"
               alt="Fernwood Fitness"
               class="bot-avatar"
             />
 
             <div class="bot-status">
-              <strong class="bot_heading_">Chat with Ferni</strong>
+              <strong class="bot_heading_">Chat with Fernie</strong>
               <small><span class="status-dot"></span>Online</small>
             </div>
           </div>
@@ -523,6 +615,10 @@
           </button>
         </div>
       </div>
+
+
+
+
     </div>
 
     <script>
@@ -618,7 +714,7 @@
           const aiIndicator = document.createElement("div");
           aiIndicator.className = "ai-indicator";
           aiIndicator.innerHTML =
-            '<img src="static/images/logo.png" alt="Healthcare Assistant" class="bot-avatar">';
+            '<img src="static/images/logo.png" alt="Healthcare Assistant" class="bot-avatar1">';
 
           const messageDiv = document.createElement("div");
           messageDiv.className = "message bot-message stream-response";
@@ -811,6 +907,17 @@
           }
         });
       });
+      // click outside chat box to close
+      document.addEventListener("click", (event) => {
+        const chatWidget = document.querySelector(".chat-widget");
+        const chatBox = document.querySelector(".chat-box");
+        
+        // Check if the click is outside the chat-widget
+        if (!chatWidget.contains(event.target) && chatBox.classList.contains("active")) {
+          chatBox.classList.remove("active");
+        }
+      });
+      
     </script>
   </body>
 </html>
