@@ -31,7 +31,8 @@ logger.addHandler(file_handler)
 
 class MedicalBot:
     def __init__(self):
-        self.endpoint = "https://capps-backend-52y7qfxjzrxiq.calmsky-7b1632e3.westus.azurecontainerapps.io/chat/stream"
+        self.endpoint ="https://capps-backend-br4xnxo2jang4.wonderfulfield-f0927b5c.westus.azurecontainerapps.io/chat/stream"
+        # self.endpoint = "https://capps-backend-52y7qfxjzrxiq.calmsky-7b1632e3.westus.azurecontainerapps.io/chat/stream"
         self.messages: List[Dict] = []
         self.session_id = datetime.now().strftime("%Y%m%d%H%M%S")
         
@@ -87,76 +88,57 @@ class MedicalBot:
                 choice['delta']['content'] = cleaned_content
         return chunk
         
-    def get_stream(self, query: str):
+
+    def get_stream(self, query: str, email: str = None):
         try:
-            # Add user message to history
             self.add_message(query)
-            
-            headers = {
-                "authority": self.endpoint.split('//')[1],
-                "accept": "*/*",
-                "Content-Type": "application/json",
-                "origin": f"https://{self.endpoint.split('//')[1]}"
+            headers = {"accept": "*/*", "Content-Type": "application/json"}
+            context = {
+                "overrides": {
+                    "temperature": 0.3,
+                    "top": 3,
+                    "retrieval_mode": "hybrid",
+                    "semantic_ranker": True,
+                    "suggest_followup_questions": True
+                }
             }
-            
+            if email:
+                context["auth_claims"] = {"email": email}
+
             payload = {
                 "messages": self.format_messages(),
-                "context": {
-                    "overrides": {
-                        "temperature": 0.3,
-                        "top": 3,
-                        "retrieval_mode": "hybrid",
-                        "semantic_ranker": True,
-                        "suggest_followup_questions": True
-                    }
-                },
+                "context": context,
                 "session_state": None
             }
-            
-            logger.info(f"Sending request with {len(self.messages)} messages")
-            
+
+            logger.info(f"Sending request with {len(self.messages)} messages (Email: {email})")
             response = requests.post(self.endpoint, json=payload, headers=headers, stream=True)
             response.raise_for_status()
-            
+
             current_response = ""
-            
             for line in response.iter_lines():
                 if line:
                     try:
                         chunk = json.loads(line)
                         chunk = self.process_stream_chunk(chunk)
-                        
                         if 'choices' in chunk and chunk['choices']:
                             content = chunk['choices'][0].get('delta', {}).get('content', '')
                             current_response += content
-                        
                         yield f"data: {json.dumps(chunk)}\n\n"
-                        
-                        if chunk.get('end_turn'):
-                            if current_response:
-                                cleaned_response = self.remove_citations(current_response)
-                                self.add_message(cleaned_response, "assistant")
-                                
+                        if chunk.get('end_turn') and current_response:
+                            cleaned = self.remove_citations(current_response)
+                            self.add_message(cleaned, "assistant")
                     except json.JSONDecodeError:
                         continue
-                        
         except Exception as e:
-            error_msg = str(e)
-            logger.error(f"Stream error: {error_msg}")
-            yield f"data: {{\"error\": \"{error_msg}\"}}\n\n"
+            logger.error(f"Stream error: {str(e)}")
+            yield f"data: {{\"error\": \"{str(e)}\"}}\n\n"
 
-# Dictionary to store bot instances
+
+
+    # Dictionary to store bot instances
 session_bots = {}
 
-# @app.route('/')
-# def home():
-#     if 'session_id' not in session:
-#         session['session_id'] = datetime.now().strftime("%Y%m%d%H%M%S")
-    
-#     session_id = session['session_id']
-#     session_bots[session_id] = MedicalBot()
-    
-#     return render_template('index.html')
 
 @app.route('/')
 def home():
@@ -166,11 +148,10 @@ def home():
     session_id = session['session_id']
     session_bots[session_id] = MedicalBot()
 
-    # Capture the email parameter from the URL
-    email = request.args.get('email')  # Get the 'email' parameter from the URL query string
-    
+    email = request.args.get('email')
     if email:
-        logger.info(f"Received email: {email}")  # Log the received email
+        session['email'] = email
+        logger.info(f"Stored email in session: {email}")
     else:
         logger.info("No email parameter received")
     
@@ -190,14 +171,16 @@ def chat():
     query = data.get('message')
     
     if not query:
-        logger.warning("Empty message received")
         return {"error": "No message provided"}, 400
-    
-    logger.info(f"Processing chat request. Current history length: {len(medical_bot.messages)}")
+
+    # ✅ Fetch email from session
+    email = session.get('email')
+
     return Response(
-        medical_bot.get_stream(query),
+        medical_bot.get_stream(query, email=email),
         mimetype='text/event-stream'
     )
+
 
 @app.route('/history', methods=['GET'])
 def get_history():
@@ -219,4 +202,3 @@ def clear_history():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
