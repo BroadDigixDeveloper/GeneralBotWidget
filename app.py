@@ -148,6 +148,16 @@ class MedicalBot:
 # Dictionary to store bot instances
 session_bots = {}
 
+# @app.route('/')
+# def home():
+#     if 'session_id' not in session:
+#         session['session_id'] = datetime.now().strftime("%Y%m%d%H%M%S")
+    
+#     session_id = session['session_id']
+#     session_bots[session_id] = MedicalBot()
+    
+#     return render_template('index.html')
+
 @app.route('/')
 def home():
     if 'session_id' not in session:
@@ -155,8 +165,17 @@ def home():
     
     session_id = session['session_id']
     session_bots[session_id] = MedicalBot()
+
+    # Capture the email parameter from the URL
+    email = request.args.get('email')  # Get the 'email' parameter from the URL query string
+    
+    if email:
+        logger.info(f"Received email: {email}")  # Log the received email
+    else:
+        logger.info("No email parameter received")
     
     return render_template('index.html')
+
 
 @app.route('/chat', methods=['POST'])
 def chat():
